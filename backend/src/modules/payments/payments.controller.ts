@@ -63,7 +63,7 @@ export const getPaymentById = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const userId = req.user!.role === 'ADMIN' ? undefined : req.user!.userId;
 
     const payment = await paymentsService.getPaymentById(id, userId);
@@ -112,7 +112,7 @@ export const processPaymentWebhook = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { status, transactionId } = req.body;
 
     const payment = await paymentsService.processPaymentWebhook(id, {
@@ -161,7 +161,7 @@ export const simulatePaymentProcessing = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const shouldSucceed = req.body?.shouldSucceed !== false;
 
     const result = await paymentsService.simulatePaymentProcessing(

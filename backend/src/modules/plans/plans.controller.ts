@@ -35,7 +35,7 @@ export const getPlanById = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const plan = await plansService.getPlanById(id);
 
     res.status(200).json({
@@ -77,7 +77,7 @@ export const updatePlan = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const plan = await plansService.updatePlan(id, req.body);
 
     res.status(200).json({
@@ -100,7 +100,7 @@ export const deletePlan = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const plan = await plansService.deletePlan(id);
 
     res.status(200).json({
@@ -122,7 +122,7 @@ export const getPlanStats = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const stats = await plansService.getPlanStats(id);
 
     res.status(200).json({

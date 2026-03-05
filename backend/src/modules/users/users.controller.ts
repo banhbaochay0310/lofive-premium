@@ -29,7 +29,7 @@ export class UsersController {
    */
   async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const user = await usersService.getUserById(req.params.id);
+      const user = await usersService.getUserById(req.params.id as string);
 
       res.status(200).json({
         success: true,
@@ -47,7 +47,7 @@ export class UsersController {
   async updateRole(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const user = await usersService.updateRole(
-        req.params.id,
+        req.params.id as string,
         req.body.role,
         req.user!.userId
       );
@@ -68,7 +68,7 @@ export class UsersController {
    */
   async deleteUser(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      await usersService.deleteUser(req.params.id, req.user!.userId);
+      await usersService.deleteUser(req.params.id as string, req.user!.userId);
 
       res.status(200).json({
         success: true,

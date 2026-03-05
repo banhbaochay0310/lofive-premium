@@ -63,7 +63,7 @@ export const getSubscriptionById = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const userId = req.user!.role === 'ADMIN' ? undefined : req.user!.userId;
 
     const subscription = await subscriptionsService.getSubscriptionById(id, userId);
@@ -87,7 +87,7 @@ export const cancelSubscription = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const userId = req.user!.userId;
 
     const subscription = await subscriptionsService.cancelSubscription(id, userId);
@@ -133,7 +133,7 @@ export const updateSubscriptionStatus = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { status } = req.body;
 
     const subscription = await subscriptionsService.updateSubscriptionStatus(id, {
@@ -160,7 +160,7 @@ export const activateSubscription = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const subscription = await subscriptionsService.activateSubscription(id);
 
     res.status(200).json({
@@ -225,7 +225,7 @@ export const renewSubscription = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const userId = req.user!.userId;
 
     const subscription = await subscriptionsService.renewSubscription(id, userId);
@@ -249,7 +249,7 @@ export const toggleAutoRenew = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const userId = req.user!.userId;
     const { autoRenew } = req.body;
 
