@@ -1,0 +1,338 @@
+### Subscription Management SaaS - Payments API Tests
+### Use REST Client extension in VS Code to run these tests
+
+@baseUrl = http://localhost:5000/api/v1
+@contentType = application/json
+
+### Variables
+# Login as admin/user to get tokens
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+@userToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+@subscriptionId = YOUR_PENDING_SUBSCRIPTION_ID
+@paymentId = YOUR_PAYMENT_ID
+
+
+###############################################
+### AUTHENTICATION SETUP
+###############################################
+
+### 1. Login as Admin
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@subscription.com",
+  "password": "Admin123!"
+}
+
+### 2. Login as Regular User
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "user@test.com",
+  "password": "Test123!"
+}
+
+
+###############################################
+### PAYMENT CREATION FLOW
+###############################################
+
+### 3. Create Subscription First (Required for payment)
+POST {{baseUrl}}/subscriptions
+Content-Type: {{contentType}}
+Authorization: Bearer {{userToken}}
+
+{
+  "planId": "550e8400-e29b-41d4-a716-446655440001"
+}
+
+### 4. Create Payment for Subscription
+# Amount should match the plan price
+POST {{baseUrl}}/payments
+Content-Type: {{contentType}}
+Authorization: Bearer {{userToken}}
+
+{
+  "subscriptionId": "{{subscriptionId}}",
+  "amount": 9.99,
+  "provider": "stripe"
+}
+
+### 5. Simulate Payment Processing (Generate webhook data)
+# This simulates the payment gateway processing
+POST {{baseUrl}}/payments/{{paymentId}}/simulate
+Content-Type: {{contentType}}
+Authorization: Bearer {{userToken}}
+
+{
+  "shouldSucceed": true
+}
+
+### 6. Process Payment Webhook - Success
+# This would normally be called by payment gateway
+# Simulates payment completion and activates subscription
+POST {{baseUrl}}/payments/{{paymentId}}/webhook
+Content-Type: {{contentType}}
+
+{
+  "status": "COMPLETED",
+  "transactionId": "TXN-1234567890-abc123"
+}
+
+### 7. Process Payment Webhook - Failure
+# Test failed payment scenario
+POST {{baseUrl}}/payments/{{paymentId}}/webhook
+Content-Type: {{contentType}}
+
+{
+  "status": "FAILED"
+}
+
+
+###############################################
+### USER ENDPOINTS (Authenticated Users)
+###############################################
+
+### 8. Get My Payments
+GET {{baseUrl}}/payments/my
+Authorization: Bearer {{userToken}}
+
+### 9. Get Payment by ID
+GET {{baseUrl}}/payments/{{paymentId}}
+Authorization: Bearer {{userToken}}
+
+
+###############################################
+### ADMIN ENDPOINTS (Admin Only)
+###############################################
+
+### 10. Get All Payments
+GET {{baseUrl}}/payments
+Authorization: Bearer {{adminToken}}
+
+### 11. Get Payments by Status - PENDING
+GET {{baseUrl}}/payments?status=PENDING
+Authorization: Bearer {{adminToken}}
+
+### 12. Get Payments by Status - COMPLETED
+GET {{baseUrl}}/payments?status=COMPLETED
+Authorization: Bearer {{adminToken}}
+
+### 13. Get Payments by Status - FAILED
+GET {{baseUrl}}/payments?status=FAILED
+Authorization: Bearer {{adminToken}}
+
+### 14. Get Payment Statistics
+GET {{baseUrl}}/payments/stats/overview
+Authorization: Bearer {{adminToken}}
+
+
+###############################################
+### COMPLETE PAYMENT FLOW TEST
+###############################################
+
+### 15. Complete Flow: Subscribe → Pay → Success
+# Step 1: Create subscription
+POST {{baseUrl}}/subscriptions
+Content-Type: {{contentType}}
+Authorization: Bearer {{userToken}}
+
+{
+  "planId": "550e8400-e29b-41d4-a716-446655440001"
+}
+
+### Step 2: Create payment (use subscription ID from step 1)
+POST {{baseUrl}}/payments
+Content-Type: {{contentType}}
+Authorization: Bearer {{userToken}}
+
+{
+  "subscriptionId": "SUBSCRIPTION_ID_FROM_STEP_1",
+  "amount": 9.99,
+  "provider": "stripe"
+}
+
+### Step 3: Simulate payment processing
+POST {{baseUrl}}/payments/PAYMENT_ID_FROM_STEP_2/simulate
+Content-Type: {{contentType}}
+Authorization: Bearer {{userToken}}
+
+{
+  "shouldSucceed": true
+}
+
+### Step 4: Process webhook (use transaction ID from step 3)
+POST {{baseUrl}}/payments/PAYMENT_ID_FROM_STEP_2/webhook
+Content-Type: {{contentType}}
+
+{
+  "status": "COMPLETED",
+  "transactionId": "TRANSACTION_ID_FROM_STEP_3"
+}
+
+### Step 5: Verify subscription is now ACTIVE
+GET {{baseUrl}}/subscriptions/SUBSCRIPTION_ID_FROM_STEP_1
+Authorization: Bearer {{userToken}}
+
+
+###############################################
+### ERROR CASES
+###############################################
+
+### 16. Create Payment - No Auth Token (401)
+POST {{baseUrl}}/payments
+Content-Type: {{contentType}}
+
+{
+  "subscriptionId": "{{subscriptionId}}",
+  "amount": 9.99,
+  "provider": "stripe"
+}
+
+### 17. Create Payment - Missing Required Fields (400)
+POST {{baseUrl}}/payments
+Content-Type: {{contentType}}
+Authorization: Bearer {{userToken}}
+
+{
+  "subscriptionId": "{{subscriptionId}}"
+}
+
+### 18. Create Payment - Invalid Subscription ID (404)
+POST {{baseUrl}}/payments
+Content-Type: {{contentType}}
+Authorization: Bearer {{userToken}}
+
+{
+  "subscriptionId": "invalid-subscription-id",
+  "amount": 9.99,
+  "provider": "stripe"
+}
+
+### 19. Create Payment - Wrong Amount (400)
+POST {{baseUrl}}/payments
+Content-Type: {{contentType}}
+Authorization: Bearer {{userToken}}
+
+{
+  "subscriptionId": "{{subscriptionId}}",
+  "amount": 5.00,
+  "provider": "stripe"
+}
+
+### 20. Create Payment - Subscription Not PENDING (400)
+# Try to pay for already active subscription
+POST {{baseUrl}}/payments
+Content-Type: {{contentType}}
+Authorization: Bearer {{userToken}}
+
+{
+  "subscriptionId": "ACTIVE_SUBSCRIPTION_ID",
+  "amount": 9.99,
+  "provider": "stripe"
+}
+
+### 21. Create Payment - Duplicate Payment (409)
+# Try to create second payment for same subscription
+POST {{baseUrl}}/payments
+Content-Type: {{contentType}}
+Authorization: Bearer {{userToken}}
+
+{
+  "subscriptionId": "{{subscriptionId}}",
+  "amount": 9.99,
+  "provider": "stripe"
+}
+
+### 22. Process Webhook - Invalid Status (400)
+POST {{baseUrl}}/payments/{{paymentId}}/webhook
+Content-Type: {{contentType}}
+
+{
+  "status": "INVALID_STATUS"
+}
+
+### 23. Process Webhook - Payment Not PENDING (400)
+# Try to process webhook for already completed payment
+POST {{baseUrl}}/payments/COMPLETED_PAYMENT_ID/webhook
+Content-Type: {{contentType}}
+
+{
+  "status": "COMPLETED",
+  "transactionId": "TXN-123"
+}
+
+### 24. Get All Payments - Regular User (403 Forbidden)
+GET {{baseUrl}}/payments
+Authorization: Bearer {{userToken}}
+
+### 25. Get Payment by ID - Another User's Payment (404 or 403)
+GET {{baseUrl}}/payments/OTHER_USER_PAYMENT_ID
+Authorization: Bearer {{userToken}}
+
+
+###############################################
+### PAYMENT FLOW SCENARIOS
+###############################################
+
+### 26. Scenario: Failed Payment Flow
+# Step 1: Create subscription
+POST {{baseUrl}}/subscriptions
+Content-Type: {{contentType}}
+Authorization: Bearer {{userToken}}
+
+{
+  "planId": "550e8400-e29b-41d4-a716-446655440001"
+}
+
+### Step 2: Create payment
+POST {{baseUrl}}/payments
+Content-Type: {{contentType}}
+Authorization: Bearer {{userToken}}
+
+{
+  "subscriptionId": "SUBSCRIPTION_ID",
+  "amount": 9.99,
+  "provider": "stripe"
+}
+
+### Step 3: Simulate failed payment
+POST {{baseUrl}}/payments/PAYMENT_ID/simulate
+Content-Type: {{contentType}}
+Authorization: Bearer {{userToken}}
+
+{
+  "shouldSucceed": false
+}
+
+### Step 4: Process failure webhook
+POST {{baseUrl}}/payments/PAYMENT_ID/webhook
+Content-Type: {{contentType}}
+
+{
+  "status": "FAILED"
+}
+
+### Step 5: Verify subscription is now FAILED
+GET {{baseUrl}}/subscriptions/SUBSCRIPTION_ID
+Authorization: Bearer {{userToken}}
+
+
+###############################################
+### INTEGRATION WITH SUBSCRIPTIONS
+###############################################
+
+### 27. Verify Payment Activates Subscription
+# After successful payment webhook, check subscription status
+GET {{baseUrl}}/subscriptions/{{subscriptionId}}
+Authorization: Bearer {{userToken}}
+
+### 28. Check Payment History After Multiple Subscriptions
+GET {{baseUrl}}/payments/my
+Authorization: Bearer {{userToken}}
+
+### 29. Admin: View All Payments and Statistics
+GET {{baseUrl}}/payments/stats/overview
+Authorization: Bearer {{adminToken}}

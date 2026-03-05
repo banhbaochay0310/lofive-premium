@@ -1,0 +1,153 @@
+### Subscription Management SaaS - Subscriptions API Tests
+### Use REST Client extension in VS Code to run these tests
+
+@baseUrl = http://localhost:5000/api/v1
+@contentType = application/json
+
+### Variables
+# Login as admin/user to get tokens
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+@userToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+
+###############################################
+### AUTHENTICATION SETUP
+###############################################
+
+### 1. Login as Admin
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@subscription.com",
+  "password": "Admin123!"
+}
+
+### 2. Login as Regular User
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "user@test.com",
+  "password": "Test123!"
+}
+
+
+###############################################
+### USER ENDPOINTS (Authenticated Users)
+###############################################
+
+### 3. Create Subscription (User subscribes to a plan)
+POST {{baseUrl}}/subscriptions
+Content-Type: {{contentType}}
+Authorization: Bearer {{userToken}}
+
+{
+  "planId": "550e8400-e29b-41d4-a716-446655440001"
+}
+
+### 4. Get My Subscriptions
+GET {{baseUrl}}/subscriptions/my
+Authorization: Bearer {{userToken}}
+
+### 5. Get Subscription by ID
+GET {{baseUrl}}/subscriptions/YOUR_SUBSCRIPTION_ID
+Authorization: Bearer {{userToken}}
+
+### 6. Cancel Subscription
+POST {{baseUrl}}/subscriptions/YOUR_SUBSCRIPTION_ID/cancel
+Authorization: Bearer {{userToken}}
+
+
+###############################################
+### ADMIN ENDPOINTS (Admin Only)
+###############################################
+
+### 7. Get All Subscriptions
+GET {{baseUrl}}/subscriptions
+Authorization: Bearer {{adminToken}}
+
+### 8. Get Subscriptions by Status (PENDING)
+GET {{baseUrl}}/subscriptions?status=PENDING
+Authorization: Bearer {{adminToken}}
+
+### 9. Get Subscriptions by Status (ACTIVE)
+GET {{baseUrl}}/subscriptions?status=ACTIVE
+Authorization: Bearer {{adminToken}}
+
+### 10. Update Subscription Status
+PUT {{baseUrl}}/subscriptions/YOUR_SUBSCRIPTION_ID/status
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "status": "ACTIVE"
+}
+
+### 11. Activate Subscription (Sets status to ACTIVE with dates)
+POST {{baseUrl}}/subscriptions/YOUR_SUBSCRIPTION_ID/activate
+Authorization: Bearer {{adminToken}}
+
+### 12. Get Subscription Statistics
+GET {{baseUrl}}/subscriptions/stats/overview
+Authorization: Bearer {{adminToken}}
+
+### 13. Check and Update Expired Subscriptions
+POST {{baseUrl}}/subscriptions/maintenance/check-expired
+Authorization: Bearer {{adminToken}}
+
+
+###############################################
+### ERROR CASES
+###############################################
+
+### 14. Create Subscription - No Auth Token (401)
+POST {{baseUrl}}/subscriptions
+Content-Type: {{contentType}}
+
+{
+  "planId": "550e8400-e29b-41d4-a716-446655440001"
+}
+
+### 15. Create Subscription - Missing Plan ID (400)
+POST {{baseUrl}}/subscriptions
+Content-Type: {{contentType}}
+Authorization: Bearer {{userToken}}
+
+{
+}
+
+### 16. Create Subscription - Invalid Plan ID (404)
+POST {{baseUrl}}/subscriptions
+Content-Type: {{contentType}}
+Authorization: Bearer {{userToken}}
+
+{
+  "planId": "invalid-plan-id"
+}
+
+### 17. Create Subscription - User Already Has Active Subscription (409)
+POST {{baseUrl}}/subscriptions
+Content-Type: {{contentType}}
+Authorization: Bearer {{userToken}}
+
+{
+  "planId": "550e8400-e29b-41d4-a716-446655440002"
+}
+
+### 18. Get All Subscriptions - Regular User (403 Forbidden)
+GET {{baseUrl}}/subscriptions
+Authorization: Bearer {{userToken}}
+
+### 19. Update Status - Invalid Status (400)
+PUT {{baseUrl}}/subscriptions/YOUR_SUBSCRIPTION_ID/status
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "status": "INVALID_STATUS"
+}
+
+### 20. Cancel Subscription - Already Canceled (400)
+POST {{baseUrl}}/subscriptions/YOUR_SUBSCRIPTION_ID/cancel
+Authorization: Bearer {{userToken}}

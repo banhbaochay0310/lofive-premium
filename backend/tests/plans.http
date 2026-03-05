@@ -1,0 +1,162 @@
+### Subscription Management SaaS - Plans API Tests
+### Use REST Client extension in VS Code to run these tests
+
+@baseUrl = http://localhost:5000/api/v1
+@contentType = application/json
+
+### Variables
+# First login as admin to get token, then paste it here
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+
+###############################################
+### PUBLIC ENDPOINTS (No authentication required)
+###############################################
+
+### 1. Get All Active Plans (Public)
+GET {{baseUrl}}/plans?activeOnly=true
+
+### 2. Get All Plans (Public - includes inactive)
+GET {{baseUrl}}/plans
+
+### 3. Get Plan by ID (use existing plan ID from seed data)
+GET {{baseUrl}}/plans/550e8400-e29b-41d4-a716-446655440001
+
+
+###############################################
+### ADMIN ENDPOINTS (Require authentication + ADMIN role)
+### First login to get admin token
+###############################################
+
+### 4. Login as Admin (to get token)
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@subscription.com",
+  "password": "Admin123!"
+}
+
+###############################################
+### 5. Create New Plan (Admin only)
+###############################################
+
+POST {{baseUrl}}/plans
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Enterprise Plan",
+  "price": 99.99,
+  "durationDays": 30,
+  "isActive": true
+}
+
+###############################################
+### 6. Create Another Plan
+###############################################
+
+POST {{baseUrl}}/plans
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Starter Plan",
+  "price": 4.99,
+  "durationDays": 30
+}
+
+###############################################
+### 7. Update Plan
+###############################################
+
+PUT {{baseUrl}}/plans/550e8400-e29b-41d4-a716-446655440001
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Basic Monthly Updated",
+  "price": 12.99
+}
+
+###############################################
+### 8. Get Plan Statistics (Admin only)
+###############################################
+
+GET {{baseUrl}}/plans/550e8400-e29b-41d4-a716-446655440001/stats
+Authorization: Bearer {{adminToken}}
+
+###############################################
+### 9. Delete Plan (Soft delete)
+###############################################
+
+DELETE {{baseUrl}}/plans/550e8400-e29b-41d4-a716-446655440003
+Authorization: Bearer {{adminToken}}
+
+
+###############################################
+### ERROR CASES
+###############################################
+
+### 10. Create Plan - Validation Error (missing required fields)
+POST {{baseUrl}}/plans
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Invalid Plan"
+}
+
+### 11. Create Plan - Duplicate Name
+POST {{baseUrl}}/plans
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "name": "Basic Monthly",
+  "price": 9.99,
+  "durationDays": 30
+}
+
+### 12. Get Plan - Not Found
+GET {{baseUrl}}/plans/non-existent-id
+
+### 13. Create Plan - No Auth Token (401 Error)
+POST {{baseUrl}}/plans
+Content-Type: {{contentType}}
+
+{
+  "name": "Unauthorized Plan",
+  "price": 9.99,
+  "durationDays": 30
+}
+
+### 14. Create Plan - Regular User (403 Forbidden)
+### First login as regular user
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "user@test.com",
+  "password": "Test123!"
+}
+
+### Then try to create plan with user token
+POST {{baseUrl}}/plans
+Content-Type: {{contentType}}
+Authorization: Bearer <paste_user_token_here>
+
+{
+  "name": "Forbidden Plan",
+  "price": 9.99,
+  "durationDays": 30
+}
+
+### 15. Update Plan - Invalid Price (negative)
+PUT {{baseUrl}}/plans/550e8400-e29b-41d4-a716-446655440001
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "price": -10
+}

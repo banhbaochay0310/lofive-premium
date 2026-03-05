@@ -1,0 +1,108 @@
+### Subscription Management SaaS - Authentication API Tests
+### Use REST Client extension in VS Code to run these tests
+
+@baseUrl = http://localhost:5000/api/v1
+@contentType = application/json
+
+### Variables (will be set during tests)
+# @authToken = your_jwt_token_here
+
+
+###############################################
+### 1. Health Check
+###############################################
+
+GET http://localhost:5000/health
+
+###############################################
+### 2. Register New User
+############################################### 
+
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "newuser@example.com",
+  "password": "NewUser@123"
+}
+
+###############################################
+### 3. Register User - Validation Error (weak password)
+###############################################
+
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "weak@example.com",
+  "password": "123"
+}
+
+###############################################
+### 4. Register User - Duplicate Email Error
+###############################################
+
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@subscription.com",
+  "password": "Test@123"
+}
+
+###############################################
+### 5. Login - Admin User
+###############################################
+
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@subscription.com",
+  "password": "Admin123!"
+}
+
+###############################################
+### 6. Login - Test User
+###############################################
+
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "user@test.com",
+  "password": "Test123!"
+}
+
+###############################################
+### 7. Login - Invalid Credentials
+###############################################
+
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@subscription.com",
+  "password": "WrongPassword"
+}
+
+###############################################
+### 8. Get Current User - Protected Route
+### First login to get token, then paste it below
+###############################################
+
+GET {{baseUrl}}/auth/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+###############################################
+### 9. Get Current User - No Token (401 Error)
+###############################################
+
+GET {{baseUrl}}/auth/me
+
+###############################################
+### 10. Get Current User - Invalid Token (401 Error)
+###############################################
+
+GET {{baseUrl}}/auth/me
+Authorization: Bearer invalid_token_here

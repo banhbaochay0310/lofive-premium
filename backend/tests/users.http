@@ -1,0 +1,214 @@
+### Users Module - API Tests
+### Base URL: http://localhost:5000/api/v1
+
+# =====================
+# Variables
+# =====================
+@baseUrl = http://localhost:5000/api/v1
+@adminToken = {{login_admin.response.body.data.token}}
+@userToken = {{login_user.response.body.data.token}}
+@newUserId = {{register_test.response.body.data.user.id}}
+
+# =====================
+# Auth Setup
+# =====================
+
+### Login as Admin
+# @name login_admin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@subscription.com",
+  "password": "Admin123!"
+}
+
+### Login as User
+# @name login_user
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@test.com",
+  "password": "Test123!"
+}
+
+### Register test user
+# @name register_test
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "usersmodule@test.com",
+  "password": "TestPass123!"
+}
+
+# =====================
+# Admin: Get All Users
+# =====================
+
+### Get all users (Admin)
+GET {{baseUrl}}/users
+Authorization: Bearer {{adminToken}}
+
+### Get all users (User - should 403)
+GET {{baseUrl}}/users
+Authorization: Bearer {{userToken}}
+
+### Get all users (No auth - should 401)
+GET {{baseUrl}}/users
+
+# =====================
+# Admin: Get User by ID
+# =====================
+
+### Get user by ID (Admin)
+GET {{baseUrl}}/users/{{newUserId}}
+Authorization: Bearer {{adminToken}}
+
+### Get user by ID - Not found
+GET {{baseUrl}}/users/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{adminToken}}
+
+# =====================
+# Admin: Update Role
+# =====================
+
+### Update user role to ADMIN
+PUT {{baseUrl}}/users/{{newUserId}}/role
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "role": "ADMIN"
+}
+
+### Update user role back to USER
+PUT {{baseUrl}}/users/{{newUserId}}/role
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "role": "USER"
+}
+
+### Update role - Invalid role
+PUT {{baseUrl}}/users/{{newUserId}}/role
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "role": "SUPERADMIN"
+}
+
+### Update own role - should fail
+PUT {{baseUrl}}/users/94a2a180-bc0b-47b7-92f0-8975adc25c7c/role
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "role": "USER"
+}
+
+# =====================
+# Admin: User Stats
+# =====================
+
+### Get user statistics (Admin)
+GET {{baseUrl}}/users/stats/overview
+Authorization: Bearer {{adminToken}}
+
+### Get user statistics (User - should 403)
+GET {{baseUrl}}/users/stats/overview
+Authorization: Bearer {{userToken}}
+
+# =====================
+# User: Update Profile
+# =====================
+
+### Update own email
+PUT {{baseUrl}}/users/profile
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "email": "updated-user@test.com"
+}
+
+### Update email - Invalid format
+PUT {{baseUrl}}/users/profile
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "email": "not-an-email"
+}
+
+### Update email - Already taken
+PUT {{baseUrl}}/users/profile
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "email": "admin@subscription.com"
+}
+
+# =====================
+# User: Change Password
+# =====================
+
+### Change password - Success
+PUT {{baseUrl}}/users/password
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "Test123!",
+  "newPassword": "NewTest123!"
+}
+
+### Change password - Wrong current password
+PUT {{baseUrl}}/users/password
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "WrongPassword1!",
+  "newPassword": "NewTest123!"
+}
+
+### Change password - Same as current
+PUT {{baseUrl}}/users/password
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "Test123!",
+  "newPassword": "Test123!"
+}
+
+### Change password - Too short
+PUT {{baseUrl}}/users/password
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "Test123!",
+  "newPassword": "short"
+}
+
+# =====================
+# Admin: Delete User
+# =====================
+
+### Delete test user (Admin)
+DELETE {{baseUrl}}/users/{{newUserId}}
+Authorization: Bearer {{adminToken}}
+
+### Delete self - should fail
+DELETE {{baseUrl}}/users/94a2a180-bc0b-47b7-92f0-8975adc25c7c
+Authorization: Bearer {{adminToken}}
+
+### Delete non-existent user
+DELETE {{baseUrl}}/users/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{adminToken}}

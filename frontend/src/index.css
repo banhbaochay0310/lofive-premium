@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+/* ===== LOFIVE Design System (Dark Mode First) ===== */
+@theme {
+  /* Emerald/Green accent palette */
+  --color-primary: #1db954;
+  --color-primary-hover: #1ed760;
+  --color-primary-foreground: #000000;
+
+  /* Dark backgrounds */
+  --color-surface-base: #000000;
+  --color-surface-card: #121212;
+  --color-surface-elevated: #181818;
+  --color-surface-highlight: #282828;
+
+  /* Text colors */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #b3b3b3;
+  --color-text-muted: #6a6a6a;
+
+  /* Borders */
+  --color-border-default: #282828;
+  --color-border-subtle: #333333;
+
+  /* Semantic colors */
+  --color-danger: #e22134;
+  --color-warning: #ffa42b;
+  --color-success: #1db954;
+}
+
+/* ===== Base overrides (Tailwind preflight handles the rest) ===== */
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue',
+    sans-serif;
+  background-color: var(--color-surface-base);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
