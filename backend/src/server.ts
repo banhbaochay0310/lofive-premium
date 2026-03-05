@@ -16,6 +16,7 @@ const startServer = async () => {
       console.log(`🚀 Server running in ${config.nodeEnv} mode on port ${config.port}`);
       console.log(`📍 Health check: http://localhost:${config.port}/health`);
       console.log(`📍 API endpoint: http://localhost:${config.port}/api/v1`);
+      console.log(`🔒 CORS allowed origin: ${config.cors.origin}`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);
